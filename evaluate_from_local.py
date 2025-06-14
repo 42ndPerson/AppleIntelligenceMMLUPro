@@ -7,6 +7,7 @@ import random
 import transformers
 import time
 import re
+import subprocess
 from vllm import LLM, SamplingParams
 from tqdm import tqdm
 import logging
@@ -25,7 +26,7 @@ def load_mmlu_pro():
     val_df = preprocess(val_df)
     return test_df, val_df
 
-
+'''
 def load_model():
     llm = LLM(model=args.model, gpu_memory_utilization=float(args.gpu_util),
                 tensor_parallel_size=torch.cuda.device_count(),
@@ -35,6 +36,7 @@ def load_model():
                                         stop=["Question:"])
     tokenizer = transformers.AutoTokenizer.from_pretrained(args.model, trust_remote_code=True)
     return (llm, sampling_params), tokenizer
+    '''
 
 
 def preprocess(test_df):
@@ -126,12 +128,20 @@ def extract_final(text):
 
 def batch_inference(llm, sampling_params, inference_batch):
     start = time.time()
-    outputs = llm.generate(inference_batch, sampling_params)
+    outputs = []
+    for prompt in inference_batch:
+        result = subprocess.run(
+            ['./FoundationModelAccessExec', prompt, sampling_params['temp'], sampling_params['max_tokens']],
+            capture_output=True,
+            text=True,
+            check=False
+        )
+        outputs.append(result.stdout) # More needed here
     logging.info(str(len(inference_batch)) + "size batch costing time: " + str(time.time() - start))
     response_batch = []
     pred_batch = []
     for output in outputs:
-        generated_text = output.outputs[0].text
+        generated_text = output.outputs[0]
         response_batch.append(generated_text)
         pred = extract_answer(generated_text)
         pred_batch.append(pred)
