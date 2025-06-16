@@ -2,13 +2,13 @@ import csv
 import json
 import argparse
 import os
-import torch
+#import torch
 import random
-import transformers
+#import transformers
 import time
 import re
 import subprocess
-from vllm import LLM, SamplingParams
+#from vllm import LLM, SamplingParams
 from tqdm import tqdm
 import logging
 import sys
@@ -38,7 +38,7 @@ def load_model():
     return (llm, sampling_params), tokenizer
     '''
 
-
+# Remove N/A options from each element
 def preprocess(test_df):
     res_df = []
     for each in test_df:
@@ -83,7 +83,7 @@ def format_cot_example(example, including_answer=True):
         prompt += "Answer: Let's think step by step."
     return prompt
 
-
+# Generate prompt with k example problems from val_df
 def generate_cot_prompt(val_df, curr, k):
     prompt = ""
     with open(f"cot_prompt_lib/initial_prompt.txt", "r") as fi:
@@ -91,7 +91,7 @@ def generate_cot_prompt(val_df, curr, k):
             prompt += line
     subject = curr["category"]
     val_df = select_by_category(val_df, subject)
-    val_df = val_df[: k]
+    val_df = val_df[: k] # Select k elements of the same subject as curr
     prompt = prompt.replace("{$}", subject) + "\n"
     for example in val_df:
         prompt += format_cot_example(example, including_answer=True)
@@ -126,16 +126,21 @@ def extract_final(text):
         return None
 
 
-def batch_inference(llm, sampling_params, inference_batch):
+def batch_inference(sampling_params, inference_batch):
     start = time.time()
     outputs = []
-    for prompt in inference_batch:
+    for prompt_idx in tqdm(range(len(inference_batch))):
+        prompt = inference_batch[prompt_idx]
+        #print("--Prompt--")
+        #print(prompt)
         result = subprocess.run(
-            ['./FoundationModelAccessExec', prompt, sampling_params['temp'], sampling_params['max_tokens']],
+            ['./FoundationAccessUtilityExec', prompt, str(sampling_params['temp']), str(sampling_params['max_tokens'])],
             capture_output=True,
             text=True,
             check=False
         )
+        #print("--Result--")
+        #print(result.stdout)
         outputs.append(result.stdout) # More needed here
     logging.info(str(len(inference_batch)) + "size batch costing time: " + str(time.time() - start))
     response_batch = []
@@ -169,30 +174,27 @@ def save_res(res, output_path):
     accu = corr / (corr + wrong)
     return accu, corr, wrong
 
-
-@torch.no_grad()
-def eval_cot(subject, model, tokenizer, val_df, test_df, output_path):
-    llm, sampling_params = model
+def eval_cot(subject, sampling_params, val_df, test_df, output_path):
+    #llm, sampling_params = model
     global choices
     logging.info("evaluating " + subject)
     inference_batches = []
 
-    for i in tqdm(range(len(test_df))):
+    for i in tqdm(range(len(test_df))): # Question by question
         k = args.ntrain
-        curr = test_df[i]
+        curr = test_df[i] # Get question targeted by loop
         prompt_length_ok = False
         prompt = None
-        while not prompt_length_ok:
+        while not prompt_length_ok: # Generate a model prompt with up to ntrain examples as will fit
             prompt = generate_cot_prompt(val_df, curr, k)
-            inputs = tokenizer(prompt, return_tensors="pt")
-            inputs = {key: value.cuda() for key, value in inputs.items()}
-            length = len(inputs["input_ids"][0])
-            if length < max_model_length - max_new_tokens:
+            inputs = prompt
+            length = len(inputs.split()) + 10 # 10 is buffer for uncertain token count with Apple LM
+            if length < max_model_length - max_new_tokens: # Ensure max_new_tokens of space for output
                 prompt_length_ok = True
             k -= 1
         inference_batches.append(prompt)
 
-    pred_batch, response_batch = batch_inference(llm, sampling_params, inference_batches)
+    pred_batch, response_batch = batch_inference(sampling_params, inference_batches)
     res = []
     for j, curr in enumerate(test_df):
         curr["pred"] = pred_batch[j]
@@ -206,16 +208,17 @@ def eval_cot(subject, model, tokenizer, val_df, test_df, output_path):
 
 
 def main():
-    model, tokenizer = load_model()
+    #model, tokenizer = load_model()
+    sampling_params = {"temp": 0, "max_tokens": max_new_tokens, "stop": ["Question:"]}
     if not os.path.exists(save_result_dir):
         os.makedirs(save_result_dir)
 
     full_test_df, full_val_df = load_mmlu_pro()
     all_subjects = []
-    for each in full_test_df:
+    for each in full_test_df: # Construct all_subjects to hold one question for each subject
         if each["category"] not in all_subjects:
             all_subjects.append(each["category"])
-    if args.selected_subjects == "all":
+    if args.selected_subjects == "all": # Filter to selected subjects
         selected_subjects = all_subjects
     else:
         selected_subjects = []
@@ -231,12 +234,12 @@ def main():
     with open(os.path.join(summary_path), 'a') as f:
         f.write("\n------category level sta------\n")
     for subject in selected_subjects:
-        if subject not in sta_dict:
+        if subject not in sta_dict: # Create record for subject
             sta_dict[subject] = {"corr": 0.0, "wrong": 0.0, "accu": 0.0}
-        test_df = select_by_category(full_test_df, subject)
+        test_df = select_by_category(full_test_df, subject) # Filter to looped subject
         val_df = select_by_category(full_val_df, subject)
         output_path = os.path.join(save_result_dir, "{}.json".format(subject))
-        acc, corr_count, wrong_count = eval_cot(subject, model, tokenizer, val_df, test_df, output_path)
+        acc, corr_count, wrong_count = eval_cot(subject, sampling_params, val_df, test_df, output_path)
         sta_dict[subject]["corr"] = corr_count
         sta_dict[subject]["wrong"] = wrong_count
         sta_dict[subject]["accu"] = acc

@@ -1,0 +1,24 @@
+2025-06-15 16:55:17,085 DEBUG Starting new HTTPS connection (1): huggingface.co:443
+2025-06-15 16:55:24,238 WARNING Using the latest cached version of the dataset since TIGER-Lab/MMLU-Pro couldn't be found on the Hugging Face Hub
+2025-06-15 16:55:24,240 WARNING Found the latest cached dataset configuration 'default' at /Users/twp/.cache/huggingface/datasets/TIGER-Lab___mmlu-pro/default/0.0.0/475d58ba0cc18a15fd5d4221f41919199e692331 (last modified on Sun Jun 15 10:55:44 2025).
+2025-06-15 16:55:24,242 DEBUG Attempting to acquire lock 4647377552 on /Users/twp/.cache/huggingface/datasets/_Users_twp_.cache_huggingface_datasets_TIGER-Lab___mmlu-pro_default_0.0.0_475d58ba0cc18a15fd5d4221f41919199e692331.lock
+2025-06-15 16:55:24,243 DEBUG Lock 4647377552 acquired on /Users/twp/.cache/huggingface/datasets/_Users_twp_.cache_huggingface_datasets_TIGER-Lab___mmlu-pro_default_0.0.0_475d58ba0cc18a15fd5d4221f41919199e692331.lock
+2025-06-15 16:55:24,244 DEBUG open file: /Users/twp/.cache/huggingface/datasets/TIGER-Lab___mmlu-pro/default/0.0.0/475d58ba0cc18a15fd5d4221f41919199e692331/dataset_info.json
+2025-06-15 16:55:24,244 DEBUG Attempting to release lock 4647377552 on /Users/twp/.cache/huggingface/datasets/_Users_twp_.cache_huggingface_datasets_TIGER-Lab___mmlu-pro_default_0.0.0_475d58ba0cc18a15fd5d4221f41919199e692331.lock
+2025-06-15 16:55:24,245 DEBUG Lock 4647377552 released on /Users/twp/.cache/huggingface/datasets/_Users_twp_.cache_huggingface_datasets_TIGER-Lab___mmlu-pro_default_0.0.0_475d58ba0cc18a15fd5d4221f41919199e692331.lock
+2025-06-15 16:55:24,700 INFO selected subjects:
+business
+law
+psychology
+biology
+chemistry
+history
+other
+health
+economics
+math
+physics
+computer science
+philosophy
+engineering
+2025-06-15 16:55:24,701 INFO evaluating biology
