@@ -1,3 +1,10 @@
+# As Modified
+I have modified the MMLU-Pro benchmark to work for Apple's on device foundation model following the release of their new `FoundationModels` framework.  The lion's share of the code here is a fork from the original MMLU-Pro repo, off of which I have mostly just modified the testing script.  I additionally made a simple command line access utility for the on-device model, as a clean interface for the testing script.  The full XCode project for the command line utility can be found in the FoundationAccessUtility folder and an executable version is presented in the project as `FoundationAccessUtilityExec`.  
+
+I have started a preliminary run of the benchmark.  At least on MacOS developer beta 1, the foundation models seem to be very slow, preventing me from finishing the whole benchmark.  Yet from what I have seen, Apple's models appear to lag slightly behind competitor models.  It is worth noting however that Apple explicitly notes that these models should not be used for the world knowledge that MMLU-Pro tests for, so it is possible that MMLU-Pro tests capabilities that Apple deprioritized in pursuit of other objectives.
+
+Below is the original README by Wang et al.
+
 # MMLU-Pro
 
 |[**🤗 Dataset**](https://huggingface.co/datasets/TIGER-Lab/MMLU-Pro) | [**🏆Leaderboard**](https://huggingface.co/spaces/TIGER-Lab/MMLU-Pro) | [**📖 Paper**](https://arxiv.org/abs/2406.01574) |
